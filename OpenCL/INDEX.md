@@ -104,3 +104,27 @@ are enforced by the programmer through explicit synchronization mechanisms.
 All OpenCL platforms support In-order execution but the out-of-order mode is optional.
 
 ## Memory Model
+
+OpenCL defines two types of memory objects:
+1. **buffer objects**: Continuous block of memory made available to the kernels
+2. **image objects**: Resticted to images
+
+OpenCL allows programmer to specify subregions of memory objects as distinct memory objects.
+
+OpenCL defines 5 distinct memory regions:
+- **Host memory**: This memory region is visible only to the host. As with most details concerning the host, 
+OpenCL defines only how the host memory interacts with OpenCL objects and constructs
+- **Global memory**: This memory region permits read/write access to all work-items in all work-groups.
+Work-items can read from or write to any element of a memory object in global memory. Reads and writes
+to global memory may be cached depending on the capabilities of the device.
+- **Constant memory**: This memory region of global memory remains constant during the execution of a kernel. The host allocates
+and initializes memory objects placed into constant memory. Work-items have read-only access to these objects.
+- **Local memory**: This memory region is local to a work-group. This memory region can be used to allocate
+variables that are shared by all work-items in that work-group. It may be implemented as dedicated regions of memory on the
+OpenCL device. Alternatively, the local memory region may be mapped onto sections of the global memory.
+- **Private memory**: This region of memory is private to a work-item. Variables defined in one work-item's private 
+memory are not visible to other work-items.
+
+Example of OpenCL memory model:
+
+![alt text](./images/memory_model.png "OpenCL memory model")
