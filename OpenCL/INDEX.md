@@ -1,5 +1,7 @@
 # OpenCL notes
 
+**NOTE**: The book considers OpenCL 1.1. Newer versions might behave quite differently.
+
 Notes from book OpenCL Programming Guide
 
 # Terms and abreviations
@@ -127,4 +129,113 @@ memory are not visible to other work-items.
 
 Example of OpenCL memory model:
 
-![alt text](./images/memory_model.png "OpenCL memory model")
+![alt text](./images/memory_model.PNG "OpenCL memory model")
+
+## Programming Models
+
+Programming models model how programmers reason about their algorithms and data parallelism. OpenCL was defined with two programming
+models in mind: **task parallelism** and **data parallelism**.
+
+### Data-Parallel Programming Model
+
+- In simple cases the same operation is simply repeated for all work-items.
+- In more complicated computations the work-items may have to share the data
+  - This can be done inside *local memory*
+  - This implies that work-items have to synchronize their execution
+- Synchronization is performed with **work-group barriers**
+  - Either all of the work-items encounter the barrier or none
+
+An example case of work-items sharing information is **reduction**, i.e. an operation that outputs less
+data elements that were inputted. For example sum is such an operation.
+
+OpenCL supports hierarchical data-parallelism where work-items are computed concurrently to each other
+and work-groups are, likevise, executed concurrently to one another. This execution can be configured
+according to **explicit** or **implicit model**. In the former the programmer takes responsibility of
+explicitly defining the sizes of the work-groups. In the latter the programmer only defines the NDRange
+space and leaves it to the system to choose the work-groups.
+
+If the kernel does not contain any branch statements, each work-item will execute identical operations but on a subset
+of data items selected bu its global ID. This is called **Single Instruction Multiple Data** or SIMD.
+A single kernel can also execute completely different commands for a set of. data elements. This is called
+**Single Program Multiple Data** or SPMD. OpenCL support both of these models. Vector operations are the only
+part that is strictly SIMD. Also on platforms with restricted bandwidht SIMD operations can be considerably
+more efficient.
+
+```C
+/// Integration program sample for an example of SIMD instructions
+
+
+float8 x, psum_vect;
+float ramp = (float8){0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5};
+float8 four = (float8)(4.0); // Fill with 8 4's 
+float8 one = (float8)(1.0);  // Fill with 8 1's
+float step_number;
+float step_size; 
+
+// ...
+
+x = ((float8)step_number + ramp)*step_size;
+psum_vect += four/(one + x*x);
+
+```
+
+### Task-Parallel Programming Model
+
+Main focus of OpenCL is data-parallelism but task-parallel execution is also supported.
+
+- OpenCL defines a task as a kernel that executes as a single work-item regardles of the
+NDRange used by other kernels in the OpenCL application.
+- Task-parallelism can be expressed solely in terms of vector operations over vector types.
+- Another kind of task-parallelism is when kernels are submitted as tasks that execute
+at the same time with an out-of-order queue.
+- Third kind of task-parallelism occurs when the tasks are connected into a task graph using OpenCL's event model.
+Commands submitted to an event queue may optionally generate events.
+
+
+### Parallel Algorithm Limitations
+
+- The portability of OpenCL programs comes in the cost of generality in the algorithms we can support.
+- Submitting a command to execute a kernel does not guarantee the concurrent execution. The implementation
+can also execute all steps sequentially. (This means that kernels started earlier cannot wait for events
+created by kernels started later)
+
+
+## OpenCL and Graphics
+
+- OpenCL was created in response to GPGPU programming but still has a strong connection to graphics processing.
+- Extensions can be used to interract with OpenGL and DirectX
+
+## The Contents of OpenCL 
+- **OpenCL platform API**: The platform API defines functions used by the host program to discover OpenCL devices and their
+capabilities as well as to create the context for the OpenCL application.
+- **OpenCL runtime API**: This API manipulates the context ot create command-queues and other operations that occur at runtime.
+For example, the functions to submit commands to the command-queue come from the OpenCL runtime API
+- **The OpenCL programming language**: This is the programming language used to write the code for kernels. It is based on an extended subset
+of the ISO C99 standard and hence is often referred to as the OpenCL C programming language.
+
+### Kernel Programming Language
+
+- ISO C99 based
+- Deleted features:
+    - Recursive functions
+    - Function pointers
+    - Bit fields
+    - stdio.h
+    - stdlib.h
+- Other considerations:
+    - Strucures and unions cannot mix datatypes from different memory spaces
+    - Opaque types such as those that support images
+    - Vector types and operations
+    - Address space qualifiers to support multiple address spaces in OpenCL
+    - A large set of built-in functions to support functionality commonly needed in OpenCL applications
+    - Atomic functions for unsigned integer and single-precision scalar variables in global and local memory
+- Floating point arithmetic
+    - IEEE 754 formats required. Double precision is optional but if supported, must support IEEE 754
+    - Default IEEE 754 rounding mode of "round to nearest". Other roudings are optional
+    - Rounding modes in OpenCL are set statically, even though the IEEE specifications require dynamic variation of rouding modes
+    - Special values of *INF* and *NaN* must be supported. The signaling *NaN* is not required
+    - Denormalized numbers (numbers smaller than one times the largest supported negative exponent) can be flushed to zero.
+    
+## Summary
+
+![alt text](./images/chapter1_summary.PNG)
