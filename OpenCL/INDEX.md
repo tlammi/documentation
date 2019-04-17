@@ -239,3 +239,6 @@ of the ISO C99 standard and hence is often referred to as the OpenCL C programmi
 ## Summary
 
 ![alt text](./images/chapter1_summary.PNG)
+
+# Chapter 2: Hello World: An OpenCL Example
+
